@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# 工作目录
+BASE_DIR="/storage/emulated/0/Download"
+TO_UNPACK="$BASE_DIR/to_unpack"
+UNPACKED="$BASE_DIR/unpacked"
+TO_PACK="$BASE_DIR/to_pack"
+PACKED="$BASE_DIR/packed"
+
+# 初始化文件夹
+mkdir -p "$TO_UNPACK" "$UNPACKED" "$TO_PACK" "$PACKED"
+
+echo "欢迎使用 MyPakTool 工具"
+echo "初始化完成，以下文件夹已创建："
+echo "1. $TO_UNPACK - 解包文件夹"
+echo "2. $UNPACKED - 解包后数据文件夹"
+echo "3. $TO_PACK - 待打包文件夹"
+echo "4. $PACKED - 打包后文件夹"
+echo
+echo "请选择功能："
+echo "1. 解包文件"
+echo "2. 打包文件"
+read -p "输入选项（1 或 2）： " CHOICE
+
+# 解包功能
+if [[ "$CHOICE" -eq 1 ]]; then
+    echo "以下是可解包的文件："
+    FILES=("$TO_UNPACK"/*.pak)
+    if [[ ${#FILES[@]} -eq 0 ]]; then
+        echo "没有找到 .pak 文件！"
+        exit 1
+    fi
+    # 列出文件
+    for i in "${!FILES[@]}"; do
+        echo "$((i+1)). ${FILES[$i]}"
+    done
+    read -p "请输入文件编号进行解包： " FILE_NUM
+    let FILE_NUM-=1
+    if [[ "$FILE_NUM" -ge 0 && "$FILE_NUM" -lt ${#FILES[@]} ]]; then
+        PAK_FILE="${FILES[$FILE_NUM]}"
+        quickbms script/script.bms "$PAK_FILE" "$UNPACKED"
+        echo "解包完成！文件已存储到：$UNPACKED"
+    else
+        echo "无效的文件编号！"
+    fi
+
+# 打包功能
+elif [[ "$CHOICE" -eq 2 ]]; then
+    echo "准备打包以下文件："
+    FILES_TO_PACK=("$TO_PACK"/*)
+    if [[ ${#FILES_TO_PACK[@]} -eq 0 ]]; then
+        echo "没有找到待打包的文件！"
+        exit 1
+    fi
+    # 列出待打包文件
+    for i in "${!FILES_TO_PACK[@]}"; do
+        echo "$((i+1)). ${FILES_TO_PACK[$i]}"
+    done
+    read -p "请输入待打包文件的编号： " FILE_NUM
+    let FILE_NUM-=1
+    if [[ "$FILE_NUM" -ge 0 && "$FILE_NUM" -lt ${#FILES_TO_PACK[@]} ]]; then
+        FILE_TO_PACK="${FILES_TO_PACK[$FILE_NUM]}"
+        read -p "请输入打包后的文件名（包含 .pak 扩展名）： " OUTPUT_PAK
+        if [[ -z "$OUTPUT_PAK" ]]; then
+            echo "未提供文件名，操作取消。"
+            exit 1
+        fi
+        quickbms -w script/script.bms "$FILE_TO_PACK" "$PACKED/$OUTPUT_PAK"
+        echo "打包完成！文件已存储到：$PACKED/$OUTPUT_PAK"
+    else
+        echo "无效的文件编号！"
+    fi
+
+else
+    echo "无效选项，请重试。"
+fi
