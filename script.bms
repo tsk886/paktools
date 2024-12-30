@@ -1,0 +1,33 @@
+# Unreal Engine 4 - Unreal Tournament 4 (*WindowsNoEditor.pak) (script 0.4.23)
+# script for QuickBMS http://quickbms.aluigi.org
+
+math NO_TAIL_INFO = 1
+quickbmsver "0.8.4"
+
+# 设置文件路径和 AES 密钥等参数
+set AES_KEY binary ""
+set TOC_FILE 0
+
+# 获取输入文件的路径
+get ARCHIVE_NAME basename
+get ARCHIVE_PATH FILEPATH
+
+# 解包逻辑
+get FILES long TOC_FILE
+
+for i = 0 < FILES
+    string NAME p "%08d" i
+    string NAME + ".dat"
+    getdstring HASH 20
+    get OFFSET longlong TOC_FILE
+    get SIZE longlong TOC_FILE
+    get ZIP long TOC_FILE
+    get ZSIZE longlong TOC_FILE
+    getdstring DUMMY2 21 TOC_FILE
+    
+    if ZIP != 0
+        comtype zlib
+    endif
+
+    log NAME OFFSET SIZE
+next i
